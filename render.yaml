@@ -26,6 +26,10 @@ services:
     startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
     healthCheckPath: /health
     envVars:
+      # Pin 3.12 — psycopg2-binary 2.9.9 / numpy 1.26 / scipy 1.14 have no wheels
+      # for Render's default Python 3.13, so they'd fail to compile from source.
+      - key: PYTHON_VERSION
+        value: "3.12.7"
       - key: POSTGRES_URL
         fromDatabase:
           name: wc2026-postgres
@@ -46,6 +50,9 @@ services:
     startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
     healthCheckPath: /health
     envVars:
+      # Pin 3.12 — psycopg2-binary 2.9.9 has no wheel for Render's default 3.13.
+      - key: PYTHON_VERSION
+        value: "3.12.7"
       - key: POSTGRES_URL
         fromDatabase:
           name: wc2026-postgres
