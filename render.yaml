@@ -1,5 +1,5 @@
 databases:
-  - name: wc2026-postgres
+  - name: wcmontecarlosim-postgres
     databaseName: wc2026
     user: wc2026
     plan: free
@@ -7,7 +7,7 @@ databases:
 services:
   # ── Redis / Key Value (rate-limit state) ────────────────────────────────────
   - type: keyvalue
-    name: wc2026-redis
+    name: wcmontecarlosim-redis
     plan: free
     maxmemoryPolicy: noeviction
     ipAllowList: []   # empty = reachable only from Render services (no external)
@@ -18,7 +18,7 @@ services:
   # OUTCOME_ENGINE_URL rather than network-level isolation (private networking
   # requires a paid plan).
   - type: web
-    name: wc2026-engine
+    name: wcmontecarlosim-engine
     runtime: python
     plan: free
     rootDir: services/outcome-engine
@@ -27,22 +27,23 @@ services:
     healthCheckPath: /health
     envVars:
       # Pin 3.12 — psycopg2-binary 2.9.9 / numpy 1.26 / scipy 1.14 have no wheels
-      # for Render's default Python 3.13, so they'd fail to compile from source.
+      # for Render's default Python 3.14, so they'd fail to compile from source.
+      # (A .python-version file in the service dir enforces this too.)
       - key: PYTHON_VERSION
         value: "3.12.7"
       - key: POSTGRES_URL
         fromDatabase:
-          name: wc2026-postgres
+          name: wcmontecarlosim-postgres
           property: connectionString
       - key: REDIS_URL
         fromService:
           type: keyvalue
-          name: wc2026-redis
+          name: wcmontecarlosim-redis
           property: connectionString
 
   # ── Orchestrator (public API) ───────────────────────────────────────────────
   - type: web
-    name: wc2026-api
+    name: wcmontecarlosim-api
     runtime: python
     plan: free
     rootDir: services/orchestrator
@@ -50,24 +51,21 @@ services:
     startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
     healthCheckPath: /health
     envVars:
-      # Pin 3.12 — psycopg2-binary 2.9.9 has no wheel for Render's default 3.13.
       - key: PYTHON_VERSION
         value: "3.12.7"
       - key: POSTGRES_URL
         fromDatabase:
-          name: wc2026-postgres
+          name: wcmontecarlosim-postgres
           property: connectionString
       - key: REDIS_URL
         fromService:
           type: keyvalue
-          name: wc2026-redis
+          name: wcmontecarlosim-redis
           property: connectionString
-      # Set after first deploy — Render assigns: https://wc2026-engine.onrender.com
       - key: OUTCOME_ENGINE_URL
-        value: https://wc2026-engine.onrender.com
-      # Set after frontend deploys — https://wc2026.onrender.com
+        value: https://wcmontecarlosim-engine.onrender.com
       - key: ALLOWED_ORIGINS
-        value: https://wc2026.onrender.com
+        value: https://wcmontecarlosim.onrender.com
       - key: MC_ONLY
         value: "true"
       # LLM keys — add in the Render dashboard, never commit them
@@ -80,16 +78,16 @@ services:
 
   # ── Frontend (Next.js static export) ───────────────────────────────────────
   - type: web
-    name: wc2026
+    name: wcmontecarlosim
     runtime: static
     rootDir: web
     buildCommand: npm ci && npm run build
     staticPublishPath: out
     envVars:
       # Points the browser directly at the orchestrator — no proxy needed for
-      # a static site. Set this to the orchestrator's Render URL.
+      # a static site. Baked into the bundle at build time.
       - key: NEXT_PUBLIC_API_URL
-        value: https://wc2026-api.onrender.com
+        value: https://wcmontecarlosim-api.onrender.com
     routes:
       # The /run/[id] route is client-rendered (run IDs are runtime UUIDs).
       # Static export emits a single shell at /run/_.html; rewrite every
