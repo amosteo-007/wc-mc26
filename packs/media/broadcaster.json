@@ -1,0 +1,38 @@
+{
+  "pack_type": "media",
+  "entity_key": "broadcaster",
+  "version": 1,
+  "payload": {
+    "description": "Media and broadcaster archetypes by region and type.",
+    "archetypes": [
+      {
+        "id": "host_broadcaster",
+        "region": "North America",
+        "lens": "Growth narrative — soccer's moment in America. Focus on accessibility, celebrity, and cultural crossover.",
+        "tone": "Optimistic, accessible, entertainment-focused",
+        "hot_button_topics": ["US/Mexico/Canada performance", "attendance records", "celebrity attendance", "TV ratings"]
+      },
+      {
+        "id": "european_broadcaster",
+        "region": "Europe",
+        "lens": "Traditional football analysis. Tactical depth. Historical context.",
+        "tone": "Analytical, sometimes skeptical of 'new football'",
+        "hot_button_topics": ["top European teams' performance", "tactical innovation", "player transfers", "refereeing standards"]
+      },
+      {
+        "id": "latin_american_broadcaster",
+        "region": "Latin America",
+        "lens": "Passionate, poetic. Football as identity and art.",
+        "tone": "Emotional, lyrical, deeply partisan",
+        "hot_button_topics": ["CONMEBOL team performances", "Messi/Brazil legacy", "generational change", "continental pride"]
+      },
+      {
+        "id": "digital_first",
+        "region": "Global",
+        "lens": "Viral moments, hot takes, engagement metrics.",
+        "tone": "Provocative, fast-moving, platform-optimized",
+        "hot_button_topics": ["viral clips", "controversy", "player social media", "fan reactions", "memes"]
+      }
+    ]
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "pack_type": "sponsor",
+  "entity_key": "fifa_partners",
+  "version": 1,
+  "payload": {
+    "description": "Archetypes for FIFA partner brands. Uses generic categories rather than real brand names.",
+    "brand_archetypes": [
+      {
+        "category": "sportswear",
+        "goals": "Maximize kit and merchandise visibility during knockout stages. Player endorsement activation peaks during semifinals and final.",
+        "risk_tolerance": "low — avoids political controversy, favors unity narratives",
+        "trigger_events": ["early exit of sponsored team", "star player injury", "kit controversy", "viral moment"]
+      },
+      {
+        "category": "beverage",
+        "goals": "Global brand association with celebration moments. In-stadium and watch-party activation.",
+        "risk_tolerance": "medium — leans into emotional moments, avoids health controversy",
+        "trigger_events": ["host city activation success", "cultural misstep", "competitor ambush marketing"]
+      },
+      {
+        "category": "technology",
+        "goals": "Innovation visibility — VAR, fan experience tech, broadcast enhancement.",
+        "risk_tolerance": "low — focuses on product, avoids emotional narratives",
+        "trigger_events": ["VAR controversy", "broadcast failure", "tech innovation story"]
+      },
+      {
+        "category": "automotive",
+        "goals": "Mobility and national pride association. Regional campaigns in host nations.",
+        "risk_tolerance": "medium — engages with national narratives carefully",
+        "trigger_events": ["host nation performance", "mobility infrastructure story", "environmental scrutiny"]
+      }
+    ],
+    "activation_windows": ["pre-tournament buildup", "group stage", "knockout escalation", "final weekend", "post-tournament"],
+    "default_stance": "brand positive, risk averse, globally unified messaging"
+  }
+}

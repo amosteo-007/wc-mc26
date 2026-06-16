@@ -1,0 +1,15 @@
+{
+  "pack_type": "team",
+  "entity_key": "ENG",
+  "version": 1,
+  "payload": {
+    "stars": [
+      {"name": "Jude Bellingham", "position": "MF", "age": 22, "estimated_value_m": 180},
+      {"name": "Bukayo Saka", "position": "FW", "age": 24, "estimated_value_m": 140},
+      {"name": "Declan Rice", "position": "MF", "age": 27, "estimated_value_m": 100},
+      {"name": "Phil Foden", "position": "MF", "age": 26, "estimated_value_m": 120},
+      {"name": "Harry Kane", "position": "FW", "age": 32, "estimated_value_m": 60},
+      {"name": "Trent Alexander-Arnold", "position": "DF", "age": 27, "estimated_value_m": 70}
+    ]
+  }
+}

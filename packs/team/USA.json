@@ -1,0 +1,16 @@
+{
+  "pack_type": "team",
+  "entity_key": "USA",
+  "version": 1,
+  "payload": {
+    "legacy": "Co-hosts of the 2026 World Cup. Best result: semifinal in 1930. Growing soccer nation with a young, Europe-based core.",
+    "stars": ["Christian Pulisic", "Giovanni Reyna", "Folarin Balogun", "Weston McKennie", "Tyler Adams"],
+    "rivalries": ["MEX", "CAN", "ENG"],
+    "current_narrative": "Hosting the World Cup is a defining moment for American soccer. The 'golden generation' must deliver on home soil. Expectation is at least quarterfinals — and the nation dares to dream bigger.",
+    "stance_priors": {
+      "optimism": 0.65,
+      "pressure_tolerance": 0.5,
+      "rivalry_intensity": 0.7
+    }
+  }
+}

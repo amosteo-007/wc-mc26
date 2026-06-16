@@ -1,0 +1,15 @@
+{
+  "pack_type": "team",
+  "entity_key": "ARG",
+  "version": 1,
+  "payload": {
+    "stars": [
+      {"name": "Julian Alvarez", "position": "FW", "age": 26, "estimated_value_m": 110},
+      {"name": "Enzo Fernandez", "position": "MF", "age": 25, "estimated_value_m": 90},
+      {"name": "Alejandro Garnacho", "position": "FW", "age": 21, "estimated_value_m": 75},
+      {"name": "Cristian Romero", "position": "DF", "age": 28, "estimated_value_m": 65},
+      {"name": "Alexis Mac Allister", "position": "MF", "age": 27, "estimated_value_m": 70},
+      {"name": "Emiliano Martinez", "position": "GK", "age": 33, "estimated_value_m": 28}
+    ]
+  }
+}

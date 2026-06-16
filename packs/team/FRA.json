@@ -1,0 +1,16 @@
+{
+  "pack_type": "team",
+  "entity_key": "FRA",
+  "version": 1,
+  "payload": {
+    "legacy": "Two-time World Cup winners (1998, 2018). 2022 finalists. The deepest talent pool in world football.",
+    "stars": ["Kylian Mbappé", "Aurélien Tchouaméni", "Eduardo Camavinga", "Ousmane Dembélé", "William Saliba"],
+    "rivalries": ["ARG", "ENG", "GER", "ITA", "BRA"],
+    "current_narrative": "France boasts the most complete squad. Mbappé's era is in full force. After coming agonizingly close in 2022, redemption is the theme. But French football always carries the risk of internal drama.",
+    "stance_priors": {
+      "optimism": 0.75,
+      "pressure_tolerance": 0.6,
+      "rivalry_intensity": 0.65
+    }
+  }
+}

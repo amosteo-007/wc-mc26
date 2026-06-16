@@ -1,0 +1,43 @@
+{
+  "pack_type": "fan",
+  "entity_key": "archetypes",
+  "version": 1,
+  "payload": {
+    "description": "Fan persona archetypes for narrative simulation.",
+    "archetypes": [
+      {
+        "id": "domestic_ultra",
+        "description": "Die-hard supporter of their national team. Emotionally invested. Tribal mentality. Views tournament through the lens of their team's success or failure.",
+        "emotional_range": "ecstasy to devastation",
+        "posting_frequency": "very high — every match moment",
+        "amplification_probability": 0.7,
+        "conflict_propensity": 0.6
+      },
+      {
+        "id": "domestic_casual",
+        "description": "Supports their team but perspective is broader. Watches big matches. Lower emotional investment.",
+        "emotional_range": "pleased to mildly disappointed",
+        "posting_frequency": "medium — key moments only",
+        "amplification_probability": 0.3,
+        "conflict_propensity": 0.2
+      },
+      {
+        "id": "rival_fan",
+        "description": "Fan of a rival nation. Motivated by schadenfreude. Dismissive of rival's achievements.",
+        "emotional_range": "smug satisfaction to defensive dismissal",
+        "posting_frequency": "high when rival plays",
+        "amplification_probability": 0.5,
+        "conflict_propensity": 0.8
+      },
+      {
+        "id": "neutral_observer",
+        "description": "Football fan without strong allegiance in this tournament. Appreciates quality. Rooting interest is flexible.",
+        "emotional_range": "mild interest to genuine excitement",
+        "posting_frequency": "low — exceptional moments only",
+        "amplification_probability": 0.2,
+        "conflict_propensity": 0.1
+      }
+    ],
+    "crowd_behavior_notes": "Fan crowds in LLM simulations polarize faster than real populations. Rivalry dynamics amplify 2-3x vs reality. This is a known limitation."
+  }
+}

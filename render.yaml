@@ -1,0 +1,93 @@
+databases:
+  - name: wc2026-postgres
+    databaseName: wc2026
+    user: wc2026
+    plan: free
+
+services:
+  # ── Redis / Key Value (rate-limit state) ────────────────────────────────────
+  - type: keyvalue
+    name: wc2026-redis
+    plan: free
+    maxmemoryPolicy: noeviction
+    ipAllowList: []   # empty = reachable only from Render services (no external)
+
+  # ── Outcome engine ──────────────────────────────────────────────────────────
+  # Not exposed publicly — only the orchestrator calls it. On free tier all
+  # services get a public URL; we rely on the orchestrator knowing the URL via
+  # OUTCOME_ENGINE_URL rather than network-level isolation (private networking
+  # requires a paid plan).
+  - type: web
+    name: wc2026-engine
+    runtime: python
+    plan: free
+    rootDir: services/outcome-engine
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: POSTGRES_URL
+        fromDatabase:
+          name: wc2026-postgres
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: keyvalue
+          name: wc2026-redis
+          property: connectionString
+
+  # ── Orchestrator (public API) ───────────────────────────────────────────────
+  - type: web
+    name: wc2026-api
+    runtime: python
+    plan: free
+    rootDir: services/orchestrator
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: POSTGRES_URL
+        fromDatabase:
+          name: wc2026-postgres
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: keyvalue
+          name: wc2026-redis
+          property: connectionString
+      # Set after first deploy — Render assigns: https://wc2026-engine.onrender.com
+      - key: OUTCOME_ENGINE_URL
+        value: https://wc2026-engine.onrender.com
+      # Set after frontend deploys — https://wc2026.onrender.com
+      - key: ALLOWED_ORIGINS
+        value: https://wc2026.onrender.com
+      - key: MC_ONLY
+        value: "true"
+      # LLM keys — add in the Render dashboard, never commit them
+      - key: PREMIUM_API_KEY
+        sync: false
+      - key: PREMIUM_MODEL
+        value: gpt-5.4-mini
+      - key: PREMIUM_BASE_URL
+        value: https://api.openai.com/v1
+
+  # ── Frontend (Next.js static export) ───────────────────────────────────────
+  - type: web
+    name: wc2026
+    runtime: static
+    rootDir: web
+    buildCommand: npm ci && npm run build
+    staticPublishPath: out
+    envVars:
+      # Points the browser directly at the orchestrator — no proxy needed for
+      # a static site. Set this to the orchestrator's Render URL.
+      - key: NEXT_PUBLIC_API_URL
+        value: https://wc2026-api.onrender.com
+    routes:
+      # The /run/[id] route is client-rendered (run IDs are runtime UUIDs).
+      # Static export emits a single shell at /run/_.html; rewrite every
+      # /run/* path to that shell so direct loads and refreshes work — the
+      # client reads the ID from the URL and polls the API.
+      - type: rewrite
+        source: /run/*
+        destination: /run/_.html

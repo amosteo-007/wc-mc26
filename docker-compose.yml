@@ -1,0 +1,140 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: wc2026
+      POSTGRES_PASSWORD: wc2026_dev
+      POSTGRES_DB: wc2026
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./data/schema/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+      - ./data/seed_teams.sql:/docker-entrypoint-initdb.d/02-seed-teams.sql
+      - ./data/seed_ratings.sql:/docker-entrypoint-initdb.d/03-seed-ratings.sql
+      - ./data/seed_format.sql:/docker-entrypoint-initdb.d/04-seed-format.sql
+      - ./data/seed_matches.sql:/docker-entrypoint-initdb.d/05-seed-matches.sql
+      - ./data/seed_wc_results.sql:/docker-entrypoint-initdb.d/06-seed-wc-results.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U wc2026"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  neo4j:
+    image: neo4j:5-community
+    environment:
+      NEO4J_AUTH: neo4j/wc2026_dev
+      NEO4J_PLUGINS: '["apoc"]'
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    volumes:
+      - neo4j_data:/data
+      - neo4j_logs:/logs
+    healthcheck:
+      test: ["CMD", "cypher-shell", "-u", "neo4j", "-p", "wc2026_dev", "RETURN 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  outcome-engine:
+    build:
+      context: ./services/outcome-engine
+      dockerfile: Dockerfile
+    ports:
+      - "8001:8000"
+    environment:
+      POSTGRES_URL: postgresql://wc2026:wc2026_dev@postgres:5432/wc2026
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./services/outcome-engine:/app
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+
+  orchestrator:
+    build:
+      context: ./services/orchestrator
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      POSTGRES_URL: postgresql://wc2026:wc2026_dev@postgres:5432/wc2026
+      REDIS_URL: redis://redis:6379
+      OUTCOME_ENGINE_URL: http://outcome-engine:8000
+      NARRATIVE_WORKER_URL: http://narrative-worker:8000
+      PREMIUM_MODEL: ${PREMIUM_MODEL:-gpt-4o}
+      PREMIUM_API_KEY: ${PREMIUM_API_KEY}
+      PREMIUM_BASE_URL: ${PREMIUM_BASE_URL}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./services/orchestrator:/app
+      - ./packs:/packs:ro
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+
+  # Daily live-results fetcher: pulls WC2026 scores from WC_RESULTS_URL and
+  # upserts them into wc_results so the wizard's tournament tables stay current.
+  # Reuses the orchestrator image (it already ships httpx + psycopg2).
+  scheduler:
+    build:
+      context: ./services/orchestrator
+      dockerfile: Dockerfile
+    working_dir: /work
+    environment:
+      POSTGRES_URL: postgresql://wc2026:wc2026_dev@postgres:5432/wc2026
+      WC_RESULTS_URL: ${WC_RESULTS_URL:-}
+      WC_REFRESH_INTERVAL: ${WC_REFRESH_INTERVAL:-86400}
+      PYTHONPATH: /work
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./pipeline:/work/pipeline:ro
+    command: python -m pipeline.scheduler
+
+  narrative-worker:
+    build:
+      context: ./services/narrative-worker
+      dockerfile: Dockerfile
+    ports:
+      - "8002:8000"
+    environment:
+      NEO4J_URI: bolt://neo4j:7687
+      NEO4J_USER: neo4j
+      NEO4J_PASSWORD: wc2026_dev
+      REDIS_URL: redis://redis:6379
+      CHEAP_MODEL: ${CHEAP_MODEL:-gpt-4o-mini}
+      CHEAP_API_KEY: ${CHEAP_API_KEY}
+      CHEAP_BASE_URL: ${CHEAP_BASE_URL}
+    depends_on:
+      neo4j:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./services/narrative-worker:/app
+      - ./packs:/packs:ro
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+
+volumes:
+  postgres_data:
+  neo4j_data:
+  neo4j_logs:

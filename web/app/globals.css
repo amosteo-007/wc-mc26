@@ -1,0 +1,57 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-surface-base text-gray-100 antialiased;
+    /* Subtle Gecko-green radial glow at the top, fading to Moon Night —
+       gives the dark canvas depth without competing with content. */
+    background-image: radial-gradient(
+      120% 60% at 50% -10%,
+      rgba(75, 204, 0, 0.06),
+      transparent 60%
+    );
+    background-attachment: fixed;
+  }
+
+  /* On-brand focus ring (Gecko Green) for all interactive elements. */
+  *:focus-visible {
+    @apply outline-none ring-2 ring-accent/60 ring-offset-2 ring-offset-surface-base;
+  }
+
+  /* Form controls inherit the surface palette by default. */
+  select,
+  input,
+  textarea {
+    @apply bg-surface-overlay border border-gray-700 text-gray-100 rounded-lg;
+  }
+}
+
+@layer components {
+  .wizard-step {
+    @apply max-w-2xl mx-auto px-4 py-8;
+  }
+  .card {
+    @apply bg-surface-raised border border-gray-800 rounded-xl p-6
+           shadow-[0_1px_0_0_rgba(255,255,255,0.02)_inset,0_8px_24px_-12px_rgba(0,0,0,0.6)];
+  }
+  .btn-primary {
+    /* Gecko Green with dark text — CoinGecko's primary button treatment. */
+    @apply bg-accent hover:bg-accent-hover text-surface-base font-semibold
+           px-6 py-3 rounded-lg
+           disabled:opacity-40 disabled:cursor-not-allowed
+           transition-colors;
+  }
+  .btn-secondary {
+    @apply bg-surface-overlay hover:bg-gray-700 text-gray-200 font-medium
+           px-6 py-3 rounded-lg border border-gray-700 transition-colors;
+  }
+}
+
+@layer utilities {
+  .disclaimer-banner {
+    @apply bg-amber-900/30 border border-amber-700/50 text-amber-200
+           px-4 py-3 rounded-lg text-sm font-medium;
+  }
+}

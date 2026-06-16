@@ -1,0 +1,15 @@
+{
+  "pack_type": "team",
+  "entity_key": "BRA",
+  "version": 1,
+  "payload": {
+    "stars": [
+      {"name": "Vinicius Jr", "position": "FW", "age": 25, "estimated_value_m": 150},
+      {"name": "Rodrygo", "position": "FW", "age": 25, "estimated_value_m": 100},
+      {"name": "Endrick", "position": "FW", "age": 19, "estimated_value_m": 80},
+      {"name": "Bruno Guimaraes", "position": "MF", "age": 28, "estimated_value_m": 85},
+      {"name": "Eder Militao", "position": "DF", "age": 28, "estimated_value_m": 70},
+      {"name": "Alisson", "position": "GK", "age": 33, "estimated_value_m": 35}
+    ]
+  }
+}
