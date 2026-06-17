@@ -44,11 +44,39 @@ export interface BracketTie {
   desc?: string;
 }
 
+/** A bracket tie resolved against live results: placeholder labels become real
+ *  FIFA codes once the feeder match is played; null = still TBD. */
+export interface ResolvedTie {
+  match: number;
+  home: string; // placeholder label (e.g. "1A", "W32-1")
+  away: string;
+  home_code: string | null; // resolved team code, or null (TBD)
+  away_code: string | null;
+  played: boolean;
+  home_goals: number | null;
+  away_goals: number | null;
+  winner: string | null;
+  desc?: string;
+}
+
+export interface ResolvedBracket {
+  R32?: ResolvedTie[];
+  R16?: ResolvedTie[];
+  QF?: ResolvedTie[];
+  SF?: ResolvedTie[];
+  "3rd_place"?: ResolvedTie;
+  Final?: ResolvedTie;
+  best_thirds?: { team: string; group: string; pts: number; gd: number; gf: number }[];
+  champion?: string | null;
+}
+
 export interface TournamentState {
   edition: string;
   groups: GroupState[];
   knockout_bracket: { R32?: BracketTie[] } & Record<string, unknown>;
+  knockout?: ResolvedBracket;
   group_stage_complete: boolean;
+  champion?: string | null;
 }
 
 export interface Condition {

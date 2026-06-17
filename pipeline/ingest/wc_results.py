@@ -41,7 +41,15 @@ POSTGRES_URL = os.getenv(
 WC_RESULTS_URL = os.getenv('WC_RESULTS_URL')
 FETCH_TIMEOUT = float(os.getenv('WC_RESULTS_TIMEOUT', '20'))
 
-VALID_STAGES = {'group', 'R32', 'R16', 'QF', 'SF', 'final'}
+# Stage vocabulary matches tournament_format.spec.knockout_stage.rounds so the
+# bracket resolver can key on it directly. 'final'/'3rd' aliases are normalized
+# in _coerce_match for feeds that spell them differently.
+VALID_STAGES = {'group', 'R32', 'R16', 'QF', 'SF', '3rd_place', 'Final'}
+_STAGE_ALIASES = {
+    'final': 'Final', 'FINAL': 'Final',
+    '3rd': '3rd_place', 'third_place': '3rd_place', '3rd-place': '3rd_place',
+    'R64': 'R32',  # some feeds label the round of 32 differently
+}
 
 
 def fetch_payload(url: str) -> Dict:
@@ -65,6 +73,7 @@ def _coerce_match(raw: Dict) -> Optional[Tuple]:
         return None
 
     stage = raw.get('stage', 'group')
+    stage = _STAGE_ALIASES.get(stage, stage)
     if stage not in VALID_STAGES:
         return None
     try:
@@ -80,6 +89,9 @@ def _coerce_match(raw: Dict) -> Optional[Tuple]:
     except (TypeError, ValueError):
         matchday = None
 
+    shootout = raw.get('shootout_winner')
+    shootout = str(shootout).upper() if shootout else None
+
     return (
         stage,
         raw.get('group'),
@@ -88,6 +100,7 @@ def _coerce_match(raw: Dict) -> Optional[Tuple]:
         str(away).upper(),
         hg,
         ag,
+        shootout,
         raw.get('played_on'),
     )
 
@@ -103,15 +116,17 @@ def upsert_results(rows: List[Tuple], edition: str) -> int:
                     """
                     INSERT INTO wc_results
                         (edition, stage, group_name, matchday,
-                         home_code, away_code, home_goals, away_goals, played_on)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                         home_code, away_code, home_goals, away_goals,
+                         shootout_winner, played_on)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                     ON CONFLICT (edition, stage, home_code, away_code)
                     DO UPDATE SET
-                        group_name = EXCLUDED.group_name,
-                        matchday   = EXCLUDED.matchday,
-                        home_goals = EXCLUDED.home_goals,
-                        away_goals = EXCLUDED.away_goals,
-                        played_on  = EXCLUDED.played_on
+                        group_name      = EXCLUDED.group_name,
+                        matchday        = EXCLUDED.matchday,
+                        home_goals      = EXCLUDED.home_goals,
+                        away_goals      = EXCLUDED.away_goals,
+                        shootout_winner = EXCLUDED.shootout_winner,
+                        played_on       = EXCLUDED.played_on
                     """,
                     (edition, *r),
                 )

@@ -68,6 +68,14 @@ services:
         value: https://wcmontecarlosim.onrender.com
       - key: MC_ONLY
         value: "true"
+      # Live results ingest: WC_RESULTS_SOURCE=fifa pulls from api.fifa.com;
+      # POST /admin/refresh (guarded by ADMIN_TOKEN) triggers it. Set ADMIN_TOKEN
+      # to a long random string in the dashboard, then hit the endpoint from an
+      # external scheduler (cron-job.org / GitHub Actions) on matchdays.
+      - key: WC_RESULTS_SOURCE
+        value: fifa
+      - key: ADMIN_TOKEN
+        sync: false
       # LLM keys — add in the Render dashboard, never commit them
       - key: PREMIUM_API_KEY
         sync: false

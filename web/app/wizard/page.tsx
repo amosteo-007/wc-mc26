@@ -239,7 +239,7 @@ export default function WizardPage() {
                         Knockout Bracket
                       </h3>
                       <KnockoutBracket
-                        r32={tournament.knockout_bracket?.R32}
+                        bracket={tournament.knockout}
                         groupStageComplete={tournament.group_stage_complete}
                       />
                     </div>

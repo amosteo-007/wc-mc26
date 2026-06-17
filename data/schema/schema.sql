@@ -37,13 +37,14 @@ CREATE TABLE tournament_format (           -- 2026: 48 teams / 12 groups / 104 m
 CREATE TABLE wc_results (                   -- live 2026 World Cup match results
   id          BIGSERIAL PRIMARY KEY,
   edition     TEXT NOT NULL DEFAULT 'WC2026',
-  stage       TEXT NOT NULL,               -- 'group','R32','R16','QF','SF','final'
+  stage       TEXT NOT NULL,               -- 'group','R32','R16','QF','SF','3rd_place','Final'
   group_name  TEXT,                        -- 'A'..'L' for group-stage matches
-  matchday    INT,                         -- 1..3 in group stage
+  matchday    INT,                         -- 1..3 in group stage; bracket match index for knockout rows
   home_code   TEXT NOT NULL,               -- fifa_code (not id; loaded pre-team-join)
   away_code   TEXT NOT NULL,
   home_goals  INT NOT NULL,
   away_goals  INT NOT NULL,
+  shootout_winner TEXT,                    -- fifa_code of the shootout victor when a knockout tie is level after ET (NULL otherwise)
   played_on   DATE,
   -- A given pairing is played at most once in the tournament, so this makes the
   -- daily fetcher's upsert idempotent (ON CONFLICT updates the score in place).

@@ -1,8 +1,11 @@
 """Orchestrator — GPT conductor. The only public API."""
 import os
 import json
-from fastapi import FastAPI, HTTPException, BackgroundTasks, Request
+import logging
+from typing import Optional
+from fastapi import FastAPI, HTTPException, BackgroundTasks, Request, Header
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 import httpx
 
 from models import (
@@ -41,6 +44,11 @@ USE_LLM = bool(os.getenv('PREMIUM_API_KEY'))
 # MC_ONLY=true strips narrative/combined from the public API — used on the
 # Render free-tier deployment where only the outcome engine is running.
 MC_ONLY = os.getenv('MC_ONLY', '').lower() in ('1', 'true', 'yes')
+# Shared secret guarding POST /admin/refresh (results ingest). Unset = the admin
+# endpoint is disabled (returns 503) so it can never be hit unauthenticated.
+ADMIN_TOKEN = os.getenv('ADMIN_TOKEN')
+
+_log = logging.getLogger("orchestrator.main")
 
 
 def _client_ip(request: Request) -> str:
@@ -128,12 +136,51 @@ async def list_teams():
 
 @app.get("/tournament")
 async def tournament_state():
-    """Official groups + live standings + knockout bracket (TBD until the group
-    stage completes). Renders the tournament view in the wizard."""
+    """Official groups + live standings + auto-advancing knockout bracket.
+    Renders the tournament view in the wizard."""
     try:
         return db.get_tournament_state()
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        _log.exception("tournament_state failed")
+        raise HTTPException(status_code=500, detail="Failed to load tournament state")
+
+
+class RefreshPayload(BaseModel):
+    """Optional body for POST /admin/refresh — a results feed in our shape.
+
+    Omit the body to pull from the configured feed (WC_RESULTS_SOURCE / URL).
+    Provide it to enter/correct scores by hand.
+    """
+    edition: str = "WC2026"
+    matches: list = []
+
+
+@app.post("/admin/refresh")
+async def admin_refresh(
+    payload: Optional[RefreshPayload] = None,
+    x_admin_token: Optional[str] = Header(default=None),
+):
+    """Ingest live results into wc_results, then standings + bracket re-derive.
+
+    Auth: send the shared secret in the `X-Admin-Token` header. If ADMIN_TOKEN
+    is unset on the server the endpoint is disabled (503). With no JSON body it
+    pulls from the configured feed; with a body it upserts those matches.
+    """
+    if not ADMIN_TOKEN:
+        raise HTTPException(status_code=503, detail="Admin refresh is not enabled.")
+    if x_admin_token != ADMIN_TOKEN:
+        raise HTTPException(status_code=401, detail="Invalid admin token.")
+    try:
+        import results_refresh
+        body = payload.model_dump() if payload and payload.matches else None
+        summary = results_refresh.refresh(body)
+        return {"status": "ok", **summary}
+    except RuntimeError as e:
+        # Configuration problem (no source) — safe to surface the message.
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception:
+        _log.exception("admin refresh failed")
+        raise HTTPException(status_code=502, detail="Results refresh failed.")
 
 
 @app.get("/packs")

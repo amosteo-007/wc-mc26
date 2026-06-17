@@ -7,6 +7,8 @@ from psycopg2.extras import RealDictCursor
 import redis
 from typing import Dict, Optional, List
 
+from knockout import resolve_bracket
+
 POSTGRES_URL = os.getenv(
     'POSTGRES_URL',
     'postgresql://wc2026:wc2026_dev@localhost:5432/wc2026'
@@ -107,10 +109,22 @@ def get_tournament_state(edition: str = 'WC2026') -> Dict:
             """, (edition,))
             results = cur.fetchall()
 
-    return _assemble_groups(spec, name_by_code, results)
+            cur.execute("""
+                SELECT stage, matchday, home_code, away_code,
+                       home_goals, away_goals, shootout_winner, played_on
+                FROM wc_results
+                WHERE edition = %s AND stage <> 'group'
+                ORDER BY stage, matchday
+            """, (edition,))
+            ko_results = cur.fetchall()
+
+    return _assemble_groups(spec, name_by_code, results, ko_results)
 
 
-def _assemble_groups(spec: Dict, name_by_code: Dict, results: List[Dict]) -> Dict:
+def _assemble_groups(
+    spec: Dict, name_by_code: Dict, results: List[Dict],
+    ko_results: Optional[List[Dict]] = None,
+) -> Dict:
     """Compute group standings (FIFA order) from results and pair with fixtures."""
     results_by_group: Dict[str, List[Dict]] = {}
     for r in results:
@@ -162,11 +176,27 @@ def _assemble_groups(spec: Dict, name_by_code: Dict, results: List[Dict]) -> Dic
             'played': len(matches),
         })
 
+    group_stage_complete = all(grp['played'] >= 6 for grp in groups_out)
+
+    # Resolve the knockout bracket forward from real results: group winners/
+    # runners-up + best thirds feed R32, and each knockout result advances the
+    # winner into the next round. Unresolved slots stay None (TBD) so the UI can
+    # render placeholders until the feeder match is played.
+    standings_by_name = {grp['group']: grp['standings'] for grp in groups_out}
+    resolved_bracket = resolve_bracket(
+        spec.get('knockout_bracket', {}),
+        standings_by_name,
+        ko_results or [],
+    )
+
     return {
         'edition': spec.get('edition', 'WC2026'),
         'groups': groups_out,
+        # The authored placeholder bracket (back-compat) plus the resolved one.
         'knockout_bracket': spec.get('knockout_bracket', {}),
-        'group_stage_complete': all(grp['played'] >= 6 for grp in groups_out),
+        'knockout': resolved_bracket,
+        'group_stage_complete': group_stage_complete,
+        'champion': resolved_bracket.get('champion'),
     }
 
 

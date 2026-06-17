@@ -90,6 +90,41 @@ Then in a browser: a tournament sim → redistribution table renders; the match
 simulator (IRN vs NZL, goal line 3) → full breakdown; refresh a `/run/<id>`
 page directly → it still loads (SPA rewrite).
 
+## Updating live results (group stages + knockout)
+
+Group standings and the knockout bracket are **computed from match results** in
+the `wc_results` table — you never edit standings or the bracket directly. Drop
+in match scores and everything re-derives: group points/GD/rank, the 8 best
+third-placed teams, and the bracket auto-advances each winner from R32 → Final.
+
+**Where scores come from.** Set `WC_RESULTS_SOURCE=fifa` (in `render.yaml`) to
+pull from FIFA's API (`api.fifa.com`, unofficial), or `WC_RESULTS_URL` for your
+own JSON feed in the `{edition, matches:[...]}` shape.
+
+**How to trigger a refresh.** `POST /admin/refresh`, guarded by the `ADMIN_TOKEN`
+secret (set it to a long random string in the Render dashboard; unset = endpoint
+disabled). No always-on worker needed — fits free tier.
+
+```bash
+API=https://wcmontecarlosim-api.onrender.com
+# Pull latest from the configured source (FIFA):
+curl -X POST $API/admin/refresh -H "X-Admin-Token: $ADMIN_TOKEN"
+# …or submit/correct scores by hand (same endpoint, JSON body):
+curl -X POST $API/admin/refresh -H "X-Admin-Token: $ADMIN_TOKEN" \
+     -H 'Content-Type: application/json' \
+     -d '{"edition":"WC2026","matches":[
+           {"stage":"R32","matchday":1,"home":"ARG","away":"USA",
+            "home_goals":2,"away_goals":1,"played_on":"2026-06-30"}]}'
+```
+
+A level knockout score needs a `"shootout_winner":"<CODE>"` to advance the
+bracket (otherwise that tie stays TBD).
+
+**Automate it (optional).** Point a free external scheduler at the endpoint on
+matchdays — e.g. [cron-job.org](https://cron-job.org) or a GitHub Actions
+`schedule:` workflow doing the same `curl`. (Render's own Cron Jobs are a paid
+feature; the external-cron route stays $0.)
+
 ## Cost & limits
 
 Everything above is **Render free tier** ($0). Trade-offs: web services sleep
