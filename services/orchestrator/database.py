@@ -64,7 +64,12 @@ def create_run(
 
 
 def get_run(run_id: str) -> Optional[Dict]:
-    """Get run details."""
+    """Get run details. A non-UUID id (e.g. the static-export shell's "_"
+    placeholder) is treated as 'not found' rather than crashing the uuid cast."""
+    try:
+        uuid.UUID(str(run_id))
+    except (ValueError, TypeError, AttributeError):
+        return None
     with get_pg_conn() as conn:
         with conn.cursor() as cur:
             cur.execute("SELECT * FROM sim_runs WHERE id = %s", (run_id,))

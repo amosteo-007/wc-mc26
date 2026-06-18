@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
 import { getSimulation } from "@/lib/api";
 import type { SimulationResult } from "@/lib/types";
 import Link from "next/link";
@@ -27,13 +26,25 @@ const STATUS_LABELS: Record<string, string> = {
   failed: "Failed",
 };
 
+/** Read the run id from the live URL. Under static export (`output: 'export'`)
+ *  the dynamic route is served by the `_` shell, so Next's route params are the
+ *  build-time placeholder ("_"), not the real segment — we must parse the path. */
+function useRunIdFromPath(): string {
+  const [runId, setRunId] = useState("");
+  useEffect(() => {
+    const segs = window.location.pathname.split("/").filter(Boolean);
+    setRunId(decodeURIComponent(segs[segs.length - 1] ?? ""));
+  }, []);
+  return runId;
+}
+
 export default function RunResults() {
-  const params = useParams();
-  const runId = params.id as string;
+  const runId = useRunIdFromPath();
   const [result, setResult] = useState<SimulationResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!runId || runId === "_") return;
     let mounted = true;
     let interval: ReturnType<typeof setInterval>;
 
